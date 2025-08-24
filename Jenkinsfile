@@ -3,20 +3,36 @@ pipeline {
 
     stages {
 
-        // ===== DOWNLOAD ARTIFACTS =====
-        stage('Fetch Artifacts') {
+        // ===== FRONTEND BUILD =====
+        stage('Build Frontend') {
+            when {
+                expression { fileExists('frontend-todolist/package.json') }
+            }
             steps {
-                echo "📥 Downloading latest build artifacts..."
-                // Jenkins automatically uses last successful build artifacts
-                copyArtifacts(projectName: 'todolist-build', filter: '**', fingerprintArtifacts: true)
+                dir('frontend-todolist') {
+                    bat 'npm install'
+                    bat 'npm run build'
+                }
+                stash name: 'frontend', includes: 'frontend-todolist/dist/**'
+            }
+        }
+
+        // ===== BACKEND BUILD =====
+        stage('Build Backend') {
+            steps {
+                dir('todolist') {
+                    bat 'mvn clean package'
+                }
+                stash name: 'backend', includes: 'todolist/target/*.war'
             }
         }
 
         // ===== FRONTEND DEPLOY =====
         stage('Deploy Frontend to Tomcat') {
             steps {
+                unstash 'frontend'
                 bat '''
-                echo 🚀 Deploying Frontend to Tomcat...
+                echo Deploying Frontend to Tomcat...
                 set FRONTEND_PATH=C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist-ui
                 if exist "%FRONTEND_PATH%" (
                     rmdir /S /Q "%FRONTEND_PATH%"
@@ -30,8 +46,9 @@ pipeline {
         // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
+                unstash 'backend'
                 bat '''
-                echo 🚀 Deploying Backend to Tomcat...
+                echo Deploying Backend to Tomcat...
                 set TOMCAT_PATH=C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps
                 if exist "%TOMCAT_PATH%\\todolist.war" (
                     del /Q "%TOMCAT_PATH%\\todolist.war"
@@ -39,7 +56,7 @@ pipeline {
                 if exist "%TOMCAT_PATH%\\todolist" (
                     rmdir /S /Q "%TOMCAT_PATH%\\todolist"
                 )
-                copy "todolist\\target\\*.war" "%TOMCAT_PATH%"
+                copy todolist\\target\\*.war "%TOMCAT_PATH%"
                 '''
             }
         }
@@ -48,11 +65,11 @@ pipeline {
     post {
         success {
             echo '✅ Deployment Successful!'
-            echo '🌐 Access Frontend at: http://localhost:8080/todolist-ui'
-            echo '🌐 Access Backend APIs at: http://localhost:8080/todolist'
+            echo '🌐 Access Frontend: http://localhost:2030/todolist-ui'
+            echo '🌐 Access Backend: http://localhost:2030/todolist'
         }
         failure {
-            echo '❌ Deployment Failed. Check logs for details.'
+            echo '❌ Pipeline Failed. Check logs for details.'
         }
     }
 }
