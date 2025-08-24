@@ -1,63 +1,59 @@
 pipeline {
     agent any
 
+    environment {
+        // Tomcat path configuration
+        TOMCAT_PATH = "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps"
+        FRONTEND_FOLDER = "frontend-todolist/todolist"
+        BACKEND_FOLDER = "todolist"
+    }
+
     stages {
 
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
-            when {
-                expression { fileExists('frontend-todolist/package.json') }
-            }
             steps {
-                dir('frontend-todolist') {
+                dir("${FRONTEND_FOLDER}") {
                     bat 'npm install'
                     bat 'npm run build'
                 }
-                stash name: 'frontend', includes: 'frontend-todolist/dist/**'
-            }
-        }
-
-        // ===== BACKEND BUILD =====
-        stage('Build Backend') {
-            steps {
-                dir('todolist') {
-                    bat 'mvn clean package'
-                }
-                stash name: 'backend', includes: 'todolist/target/*.war'
             }
         }
 
         // ===== FRONTEND DEPLOY =====
         stage('Deploy Frontend to Tomcat') {
             steps {
-                unstash 'frontend'
-                bat '''
-                echo Deploying Frontend to Tomcat...
-                set FRONTEND_PATH=C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist-ui
-                if exist "%FRONTEND_PATH%" (
-                    rmdir /S /Q "%FRONTEND_PATH%"
+                bat """
+                if exist "${TOMCAT_PATH}\\todolist-frontend" (
+                    rmdir /S /Q "${TOMCAT_PATH}\\todolist-frontend"
                 )
-                mkdir "%FRONTEND_PATH%"
-                xcopy /E /I /Y frontend-todolist\\dist\\* "%FRONTEND_PATH%"
-                '''
+                mkdir "${TOMCAT_PATH}\\todolist-frontend"
+                xcopy /E /I /Y ${FRONTEND_FOLDER}\\dist\\* "${TOMCAT_PATH}\\todolist-frontend"
+                """
+            }
+        }
+
+        // ===== BACKEND BUILD =====
+        stage('Build Backend') {
+            steps {
+                dir("${BACKEND_FOLDER}") {
+                    bat 'mvn clean package -DskipTests'
+                }
             }
         }
 
         // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
-                unstash 'backend'
-                bat '''
-                echo Deploying Backend to Tomcat...
-                set TOMCAT_PATH=C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps
-                if exist "%TOMCAT_PATH%\\todolist.war" (
-                    del /Q "%TOMCAT_PATH%\\todolist.war"
+                bat """
+                if exist "${TOMCAT_PATH}\\todolist-backend.war" (
+                    del /Q "${TOMCAT_PATH}\\todolist-backend.war"
                 )
-                if exist "%TOMCAT_PATH%\\todolist" (
-                    rmdir /S /Q "%TOMCAT_PATH%\\todolist"
+                if exist "${TOMCAT_PATH}\\todolist-backend" (
+                    rmdir /S /Q "${TOMCAT_PATH}\\todolist-backend"
                 )
-                copy todolist\\target\\*.war "%TOMCAT_PATH%"
-                '''
+                copy "${BACKEND_FOLDER}\\target\\*.war" "${TOMCAT_PATH}\\todolist-backend.war"
+                """
             }
         }
     }
@@ -65,11 +61,9 @@ pipeline {
     post {
         success {
             echo '✅ Deployment Successful!'
-            echo '🌐 Access Frontend: http://localhost:2030/todolist-ui'
-            echo '🌐 Access Backend: http://localhost:2030/todolist'
         }
         failure {
-            echo '❌ Pipeline Failed. Check logs for details.'
+            echo '❌ Pipeline Failed. Please check logs.'
         }
     }
 }
