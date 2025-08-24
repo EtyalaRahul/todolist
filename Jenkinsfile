@@ -5,7 +5,13 @@ pipeline {
 
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
+            when {
+                expression { fileExists('frontend-todolist/package.json') }
+            }
             steps {
+                script {
+                    echo "Building Frontend..."
+                }
                 dir('frontend-todolist') {
                     bat 'npm install'
                     bat 'npm run build'
@@ -15,13 +21,17 @@ pipeline {
 
         // ===== FRONTEND DEPLOY =====
         stage('Deploy Frontend to Tomcat') {
+            when {
+                expression { fileExists('frontend-todolist/dist') }
+            }
             steps {
                 bat '''
+                echo Deploying Frontend to Tomcat...
                 if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist" (
                     rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist"
                 )
                 mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist"
-                xcopy /E /I /Y todolist\\dist\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist"
+                xcopy /E /I /Y frontend-todolist\\dist\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist"
                 '''
             }
         }
@@ -39,6 +49,7 @@ pipeline {
         stage('Deploy Backend to Tomcat') {
             steps {
                 bat '''
+                echo Deploying Backend to Tomcat...
                 if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist.war" (
                     del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist.war"
                 )
@@ -54,10 +65,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo '✅ Deployment Successful!'
         }
         failure {
-            echo 'Pipeline Failed.'
+            echo '❌ Pipeline Failed. Check logs for details.'
         }
     }
 }
