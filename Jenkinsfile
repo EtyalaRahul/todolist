@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Tomcat path configuration
         TOMCAT_PATH = "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps"
-        FRONTEND_FOLDER = "frontend-todolist/todolist"
+        FRONTEND_FOLDER = "frontend-todolist\\todolist"
         BACKEND_FOLDER = "todolist"
     }
 
@@ -28,7 +28,7 @@ pipeline {
                     rmdir /S /Q "${TOMCAT_PATH}\\todolist-frontend"
                 )
                 mkdir "${TOMCAT_PATH}\\todolist-frontend"
-                xcopy /E /I /Y ${FRONTEND_FOLDER}\\dist\\* "${TOMCAT_PATH}\\todolist-frontend"
+                xcopy /E /I /Y "${WORKSPACE}\\${FRONTEND_FOLDER}\\dist\\*" "${TOMCAT_PATH}\\todolist-frontend\\"
                 """
             }
         }
@@ -52,7 +52,7 @@ pipeline {
                 if exist "${TOMCAT_PATH}\\todolist-backend" (
                     rmdir /S /Q "${TOMCAT_PATH}\\todolist-backend"
                 )
-                copy "${BACKEND_FOLDER}\\target\\*.war" "${TOMCAT_PATH}\\todolist-backend.war"
+                copy "${WORKSPACE}\\${BACKEND_FOLDER}\\target\\*.war" "${TOMCAT_PATH}\\todolist-backend.war"
                 """
             }
         }
