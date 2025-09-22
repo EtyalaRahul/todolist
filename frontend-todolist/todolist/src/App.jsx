@@ -10,7 +10,7 @@ const App = () => {
   const [status, setStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_URL = "http://localhost:2030/todolist/api/todos";
+  const API_URL = "http://localhost:2030/todolist-backend/api/todos";
 
   // Fetch all todos from backend
   const fetchTodos = async () => {
