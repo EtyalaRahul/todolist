@@ -111,7 +111,7 @@ const App = () => {
 
       <div className="app-container cyberpunk-card">
         <h1 className="cyberpunk-title glitch" data-text="📝 CYBER-TODO">
-          📝 CYBER-TODO
+          to-do-list
         </h1>
 
         {/* Add or Update Todo */}
