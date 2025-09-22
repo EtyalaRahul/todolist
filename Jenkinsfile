@@ -45,7 +45,7 @@ pipeline {
                 if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist-backend" (
                     rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist-backend"
                 )
-                copy "todolist\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\todolist-backend.war"
+                copy "todolist\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\"
                 '''
             }
         }
