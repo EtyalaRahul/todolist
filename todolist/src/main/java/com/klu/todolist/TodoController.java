@@ -27,10 +27,7 @@ public class TodoController {
         return ResponseEntity.ok(todoService.getAllTodos());
     }
 
-    @GetMapping("/)
-    public String home() {
-        return "welcome to home of todolist";
-    }
+   
 
     // Get a single todo by ID
     @GetMapping("/{id}")
